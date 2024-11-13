@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write   # Ensure this allows pushing tags and commits
+
 jobs:
   build:
     runs-on: ubuntu-latest
