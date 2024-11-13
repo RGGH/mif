@@ -1,0 +1,51 @@
+name: Rust Cross Compile for Ubuntu Linux
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        component: rustfmt
+
+    - name: Install cross
+      run: cargo install cross
+
+    - name: Build for Ubuntu Linux (x86_64)
+      run: cross build --target x86_64-unknown-linux-gnu --release
+
+    - name: Upload artifact for Ubuntu Linux
+      uses: actions/upload-artifact@v3
+      with:
+        name: ubuntu-build
+        path: target/x86_64-unknown-linux-gnu/release/mif
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: target/x86_64-unknown-linux-gnu/release/mif
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: target/x86_64-unknown-linux-gnu/release/mif
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
