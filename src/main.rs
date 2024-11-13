@@ -1,33 +1,23 @@
-use image::{GenericImageView, Rgba};
+use image::GenericImageView;
 use minifb::{Key, Window, WindowOptions};
 use rand::Rng;
+use std::time::Instant;
+use image_utils::convert_to_mono;
+
+mod image_utils;
 
 const SQUARE_SIZE: u32 = 50;
 const SQUARE_SIZE_STEP: u32 = 5;
 const DROP_SIZE: u32 = 5;
 const NUM_DROPS: usize = 6;
+const DROP_DELAY: f32 = 0.5; // Delay in seconds for staggered start of each drop
+const DROP_SPEED: f32 = 0.001; // Time-based speed (larger values make drops fall slower)
 
 struct Raindrop {
     x: u32,
     y: u32,
-}
-
-fn convert_to_mono(image_data: &[u8]) -> Vec<u32> {
-    let img = image::load_from_memory(image_data).expect("Failed to load image");
-    let (width, height) = img.dimensions();
-    let mut buffer: Vec<u32> = vec![0; (width * height) as usize];
-
-    for (x, y, pixel) in img.pixels() {
-        let Rgba([r, g, b, _]) = pixel;
-        let grayscale = (0.299 * r as f32 + 0.587 * g as f32 + 0.114 * b as f32) as u8;
-        // 1D array (buffer) to represent a 2D image
-        buffer[(y * width + x) as usize] = (grayscale as u32)
-            | ((grayscale as u32) << 8)
-            | ((grayscale as u32) << 16)
-            | 0xFF000000;
-    }
-
-    buffer
+    start_time: Instant,  // Time when the drop starts falling
+    last_update: Instant, // Last time the drop's position was updated
 }
 
 fn draw_square(buffer: &mut Vec<u32>, width: u32, height: u32, x: u32, y: u32, size: u32) {
@@ -48,7 +38,7 @@ fn draw_raindrop(buffer: &mut Vec<u32>, width: u32, height: u32, drop: &Raindrop
             let px = drop.x + dx;
             let py = drop.y + dy;
             if px < width && py < height {
-                buffer[(py * width + px) as usize] = 0xFF0000FF; // Blue color
+                buffer[(py * width + px) as usize] = 0xFFFFFFFF // white
             }
         }
     }
@@ -65,7 +55,7 @@ fn main() {
     let height = height as u32;
 
     let mut window = Window::new(
-        "Game Window",
+        "Cat ZZZ",
         width as usize,
         height as usize,
         WindowOptions::default(),
@@ -76,11 +66,13 @@ fn main() {
     let mut square_y = height / 2 - SQUARE_SIZE / 2;
     let mut current_square_size = SQUARE_SIZE;
 
-    // each raindrop's initial position randomized
+    // Initialize raindrops: they start falling from the top with staggered start times
     let mut raindrops: Vec<Raindrop> = (0..NUM_DROPS)
-        .map(|_| Raindrop {
+        .map(|i| Raindrop {
             x: rand::thread_rng().gen_range(0..width - DROP_SIZE),
             y: 0,
+            start_time: Instant::now() + std::time::Duration::from_secs_f32(i as f32 * DROP_DELAY), // Staggered start times
+            last_update: Instant::now(), // Set initial update time
         })
         .collect();
 
@@ -111,6 +103,7 @@ fn main() {
             square_x -= (current_square_size - old_size) / 2;
             square_y -= (current_square_size - old_size) / 2;
         } else {
+            // Only reset the size, not the position
             current_square_size = SQUARE_SIZE;
         }
 
@@ -132,18 +125,27 @@ fn main() {
             current_square_size,
         );
 
-        // Update raindrop positions and draw them
+        // Update raindrop positions and draw them with staggered start
         for drop in raindrops.iter_mut() {
+            if drop.start_time.elapsed().as_secs_f32() > 0.0 {
+                // Only move the raindrop if its start time has passed
+                if drop.y < height - DROP_SIZE
+                    && drop.last_update.elapsed().as_secs_f32() > DROP_SPEED
+                {
+                    // Update the position of the raindrop at a slower rate (controlled by DROP_SPEED)
+                    drop.y += 1;
+                    drop.last_update = Instant::now(); // Update the last update time
+                }
+            }
+            // Draw the raindrop
             draw_raindrop(&mut buffer, width, height, drop);
+        }
 
-            // Move the raindrop downwards
-            // Move the raindrop downwards
-            drop.y += 1;
-
-            // Reset raindrop to the top if it goes beyond the bottom
-            if drop.y >= height {
-                drop.y = 0;
-                drop.x = rand::thread_rng().gen_range(0..width - DROP_SIZE);
+        // Reset raindrops that have stuck at the bottom to the top for the next cycle
+        for drop in raindrops.iter_mut() {
+            if drop.y == height - DROP_SIZE {
+                drop.y = 0; // Reset to top
+                drop.x = rand::thread_rng().gen_range(0..width - DROP_SIZE); // Randomize position
             }
         }
 
