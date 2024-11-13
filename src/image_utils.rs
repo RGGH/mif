@@ -1,3 +1,6 @@
+use crate::Raindrop;
+use crate::DROP_SIZE;
+
 use image::{GenericImageView, Rgba};
 
 pub fn convert_to_mono(image_data: &[u8]) -> Vec<u32> {
@@ -16,4 +19,28 @@ pub fn convert_to_mono(image_data: &[u8]) -> Vec<u32> {
     }
 
     buffer
+}
+
+pub fn draw_square(buffer: &mut Vec<u32>, width: u32, height: u32, x: u32, y: u32, size: u32) {
+    for dy in 0..size {
+        for dx in 0..size {
+            let px = x + dx;
+            let py = y + dy;
+            if px < width && py < height {
+                buffer[(py * width + px) as usize] = 0xFFFF0000; // red
+            }
+        }
+    }
+}
+
+pub fn draw_raindrop(buffer: &mut Vec<u32>, width: u32, height: u32, drop: &Raindrop) {
+    for dy in 0..DROP_SIZE {
+        for dx in 0..DROP_SIZE {
+            let px = drop.x + dx;
+            let py = drop.y + dy;
+            if px < width && py < height {
+                buffer[(py * width + px) as usize] = 0xFFFFFFFF // white
+            }
+        }
+    }
 }

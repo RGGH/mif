@@ -1,17 +1,19 @@
 use image::GenericImageView;
+use image::Rgba;
 use minifb::{Key, Window, WindowOptions};
 use rand::Rng;
 use std::time::Instant;
-use image_utils::convert_to_mono;
+
+use image_utils::{convert_to_mono, draw_raindrop, draw_square};
 
 mod image_utils;
 
-const SQUARE_SIZE: u32 = 50;
+const SQUARE_SIZE: u32 = 40;
 const SQUARE_SIZE_STEP: u32 = 5;
 const DROP_SIZE: u32 = 5;
 const NUM_DROPS: usize = 6;
 const DROP_DELAY: f32 = 0.5; // Delay in seconds for staggered start of each drop
-const DROP_SPEED: f32 = 0.001; // Time-based speed (larger values make drops fall slower)
+const DROP_SPEED: f32 = 0.002; // Time-based speed (larger values make drops fall slower)
 
 struct Raindrop {
     x: u32,
@@ -20,33 +22,16 @@ struct Raindrop {
     last_update: Instant, // Last time the drop's position was updated
 }
 
-fn draw_square(buffer: &mut Vec<u32>, width: u32, height: u32, x: u32, y: u32, size: u32) {
-    for dy in 0..size {
-        for dx in 0..size {
-            let px = x + dx;
-            let py = y + dy;
-            if px < width && py < height {
-                buffer[(py * width + px) as usize] = 0xFFFF0000;
-            }
-        }
-    }
-}
-
-fn draw_raindrop(buffer: &mut Vec<u32>, width: u32, height: u32, drop: &Raindrop) {
-    for dy in 0..DROP_SIZE {
-        for dx in 0..DROP_SIZE {
-            let px = drop.x + dx;
-            let py = drop.y + dy;
-            if px < width && py < height {
-                buffer[(py * width + px) as usize] = 0xFFFFFFFF // white
-            }
-        }
-    }
-}
-
 fn main() {
+    let mut score = 0;
+    let mut use_mono_background = true;
+
+    // Load both the mono and original backgrounds
     let image_data = include_bytes!("background.png");
-    let background_buffer = convert_to_mono(image_data);
+    let original_background =
+        image::load_from_memory(image_data).expect("Failed to load original image");
+
+    let mono_background = convert_to_mono(image_data);
 
     let (width, height) = image::load_from_memory(image_data)
         .expect("Failed to load image")
@@ -77,7 +62,21 @@ fn main() {
         .collect();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        let mut buffer = background_buffer.clone();
+        let mut buffer = if use_mono_background {
+            mono_background.clone()
+        } else {
+            // Draw the original image when score is 10 or more
+            let (width, height) = original_background.dimensions();
+            let mut buffer = vec![0; (width * height) as usize];
+
+            for (x, y, pixel) in original_background.pixels() {
+                let Rgba([r, g, b, a]) = pixel;
+                buffer[(y * width + x) as usize] =
+                    (a as u32) << 24 | (r as u32) << 16 | (g as u32) << 8 | b as u32;
+            }
+
+            buffer
+        };
 
         // Handle input to move the square
         if window.is_key_down(Key::Up) && square_y > 0 {
@@ -128,7 +127,7 @@ fn main() {
         // Update raindrop positions and draw them with staggered start
         for drop in raindrops.iter_mut() {
             if drop.start_time.elapsed().as_secs_f32() > 0.0 {
-                // Only move the raindrop if its start time has passed
+                // Only move the raindrop if it0xFFFFFFFFs start time has passed
                 if drop.y < height - DROP_SIZE
                     && drop.last_update.elapsed().as_secs_f32() > DROP_SPEED
                 {
@@ -137,6 +136,15 @@ fn main() {
                     drop.last_update = Instant::now(); // Update the last update time
                 }
             }
+            // Check for collision with the square
+            let drop_rect = (drop.x, drop.y, DROP_SIZE, DROP_SIZE);
+            let square_rect = (square_x, square_y, current_square_size, current_square_size);
+            if is_collision(drop_rect, square_rect) {
+                score += 1; // Increment score
+                drop.y = 0; // Reset raindrop to the top
+                drop.x = rand::thread_rng().gen_range(0..width - DROP_SIZE); // Randomize x position
+            }
+
             // Draw the raindrop
             draw_raindrop(&mut buffer, width, height, drop);
         }
@@ -153,8 +161,23 @@ fn main() {
         print!("\x1B[2J\x1B[1;1H"); // Clears the terminal screen
         println!("Square Position - x: {}, y: {}", square_x, square_y);
 
+        // Display the score on the console
+        println!("Score: {}", score);
+        if score >= 10 && use_mono_background {
+            use_mono_background = false;
+        }
+
         window
             .update_with_buffer(&buffer, width as usize, height as usize)
             .expect("Failed to update window buffer");
     }
+}
+
+
+// Helper function to check collision between two rectangles
+fn is_collision(rect1: (u32, u32, u32, u32), rect2: (u32, u32, u32, u32)) -> bool {
+    let (x1, y1, w1, h1) = rect1;
+    let (x2, y2, w2, h2) = rect2;
+
+    x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
 }
