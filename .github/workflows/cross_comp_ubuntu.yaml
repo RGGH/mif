@@ -35,7 +35,7 @@ jobs:
     - name: Create a new tag
       id: tag
       run: |
-        TAG="v$(date +'%Y%m%d%H%M%S')"  # Example tag format: vYYYYMMDDHHMMSS
+        TAG="Ubuntu"  # Set the tag to "Ubuntu" for consistency
         git tag $TAG
         git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
         git push origin $TAG
@@ -65,4 +65,3 @@ jobs:
         tag_name: ${{ env.TAG }}  # Ensure the tag is passed here too
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
