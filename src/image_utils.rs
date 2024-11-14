@@ -33,17 +33,23 @@ pub fn draw_square(buffer: &mut Vec<u32>, width: u32, height: u32, x: u32, y: u3
     }
 }
 
-pub fn draw_raindrop(buffer: &mut Vec<u32>, width: u32, height: u32, drop: &Raindrop) {
-    for dy in 0..DROP_SIZE {
-        for dx in 0..DROP_SIZE {
-            let px = drop.x + dx;
-            let py = drop.y + dy;
+pub fn draw_raindrop(buffer: &mut Vec<u32>, width: u32, height: u32, raindrop: &Raindrop) {
+    // Color for the raindrop (white)
+    let white = 0xFFFFFFFF;
+
+    // Drawing the raindrop at its position
+    for y in 0..DROP_SIZE {
+        for x in 0..DROP_SIZE {
+            let px = raindrop.x + x;
+            let py = raindrop.y + y;
             if px < width && py < height {
-                buffer[(py * width + px) as usize] = 0xFFFFFFFF // white
+                let index = (py * width + px) as usize;
+                buffer[index] = white; // Set pixel color to white
             }
         }
     }
 }
+
 
 // Helper function to check collision between two rectangles
 pub fn is_collision(rect1: (u32, u32, u32, u32), rect2: (u32, u32, u32, u32)) -> bool {
@@ -52,4 +58,3 @@ pub fn is_collision(rect1: (u32, u32, u32, u32), rect2: (u32, u32, u32, u32)) ->
 
     x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
 }
-

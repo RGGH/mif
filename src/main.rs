@@ -22,14 +22,38 @@ struct Raindrop {
     last_update: Instant, // Last time the drop's position was updated
 }
 
+// Enum for different background types
+enum Background<'a> {
+    Mono(&'a [u32]),    // Use slice instead of Vec for background data
+    Original(&'a [u32]), // Use slice instead of Vec for background data
+    Custom(&'a [u32]),   // Use slice for custom background
+}
+
 fn main() {
     let mut score = 0;
-    let mut use_mono_background = true;
+    let mut _current_background = Background::Mono(&[]); // Start with mono background
 
     // Load both the mono and original backgrounds
     let image_data = include_bytes!("background.png");
-    let original_background = image::load_from_memory(image_data).expect("Failed to load original image");
+    let original_background =
+        image::load_from_memory(image_data).expect("Failed to load original image");
     let mono_background = convert_to_mono(image_data);
+
+    // Load custom background (e.g., when score reaches 15)
+    let custom_image_data = include_bytes!("background_mouse.png");
+    let custom_background = image::load_from_memory(custom_image_data).expect("Failed to load custom image");
+    
+    // Convert custom background to u32 pixel values
+    let custom_background = {
+        let (width, height) = custom_background.dimensions();
+        let mut buffer = vec![0; (width * height) as usize];
+        for (x, y, pixel) in custom_background.pixels() {
+            let Rgba([r, g, b, a]) = pixel;
+            buffer[(y * width + x) as usize] =
+                (a as u32) << 24 | (r as u32) << 16 | (g as u32) << 8 | b as u32;
+        }
+        buffer
+    };
 
     let (width, height) = original_background.dimensions();
     let width = width as u32;
@@ -40,7 +64,8 @@ fn main() {
         width as usize,
         height as usize,
         WindowOptions::default(),
-    ).expect("Unable to create window");
+    )
+    .expect("Unable to create window");
 
     let mut square_x = width / 2 - SQUARE_SIZE / 2;
     let mut square_y = height / 2 - SQUARE_SIZE / 2;
@@ -55,6 +80,7 @@ fn main() {
         })
         .collect();
 
+    // Generate the color background
     let color_background = {
         let mut buffer = vec![0; (width * height) as usize];
         for (x, y, pixel) in original_background.pixels() {
@@ -65,12 +91,26 @@ fn main() {
         buffer
     };
 
+    // Store backgrounds in enum variants
+    let mono_background_ref = Background::Mono(&mono_background);
+    let original_background_ref = Background::Original(&color_background);
+    let custom_background_ref = Background::Custom(&custom_background);
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        // Clone the data directly, no mutable reference to a clone
-        let mut buffer = if use_mono_background {
-            mono_background.clone()
-        } else {
-            color_background.clone()
+        // Directly use the background based on score, avoiding cloning
+        let mut buffer = match score {
+            s if s < 10 => match mono_background_ref {
+                Background::Mono(data) => data.to_vec(),
+                _ => vec![], // Default if something unexpected happens
+            },
+            s if s >= 10 && s < 15 => match original_background_ref {
+                Background::Original(data) => data.to_vec(),
+                _ => vec![], // Default if something unexpected happens
+            },
+            _ => match custom_background_ref {
+                Background::Custom(data) => data.to_vec(),
+                _ => vec![], // Default if something unexpected happens
+            },
         };
 
         // Handle input to move the square
@@ -105,13 +145,22 @@ fn main() {
             square_y = height - current_square_size;
         }
 
-        // Pass mutable reference to buffer when drawing square
-        draw_square(&mut buffer, width, height, square_x, square_y, current_square_size);
+        // Draw square on the background
+        draw_square(
+            &mut buffer,
+            width,
+            height,
+            square_x,
+            square_y,
+            current_square_size,
+        );
 
         // Update raindrop positions and draw them with staggered start
         for drop in raindrops.iter_mut() {
             if drop.start_time.elapsed().as_secs_f32() > 0.0 {
-                if drop.y < height - DROP_SIZE && drop.last_update.elapsed().as_secs_f32() > DROP_SPEED {
+                if drop.y < height - DROP_SIZE
+                    && drop.last_update.elapsed().as_secs_f32() > DROP_SPEED
+                {
                     drop.y += 1;
                     drop.last_update = Instant::now();
                 }
@@ -123,7 +172,7 @@ fn main() {
                 drop.y = 0;
                 drop.x = rand::thread_rng().gen_range(0..width - DROP_SIZE);
             }
-            // Pass mutable reference to buffer when drawing raindrop
+            // Draw raindrop on the background
             draw_raindrop(&mut buffer, width, height, drop);
         }
 
@@ -138,10 +187,9 @@ fn main() {
         println!("Square Position - x: {}, y: {}", square_x, square_y);
         println!("Score: {}", score);
 
-        if score >= 10 && use_mono_background {
-            use_mono_background = false;
-        }
-
-        window.update_with_buffer(&buffer, width as usize, height as usize).expect("Failed to update window buffer");
+        window
+            .update_with_buffer(&buffer, width as usize, height as usize)
+            .expect("Failed to update window buffer");
     }
 }
+
