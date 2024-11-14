@@ -66,10 +66,11 @@ fn main() {
     };
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        let buffer: &mut Vec<u32> = if use_mono_background {
-            &mut mono_background.clone()
+        // Clone the data directly, no mutable reference to a clone
+        let mut buffer = if use_mono_background {
+            mono_background.clone()
         } else {
-            &mut color_background.clone()
+            color_background.clone()
         };
 
         // Handle input to move the square
@@ -104,7 +105,8 @@ fn main() {
             square_y = height - current_square_size;
         }
 
-        draw_square(buffer, width, height, square_x, square_y, current_square_size);
+        // Pass mutable reference to buffer when drawing square
+        draw_square(&mut buffer, width, height, square_x, square_y, current_square_size);
 
         // Update raindrop positions and draw them with staggered start
         for drop in raindrops.iter_mut() {
@@ -121,7 +123,8 @@ fn main() {
                 drop.y = 0;
                 drop.x = rand::thread_rng().gen_range(0..width - DROP_SIZE);
             }
-            draw_raindrop(buffer, width, height, drop);
+            // Pass mutable reference to buffer when drawing raindrop
+            draw_raindrop(&mut buffer, width, height, drop);
         }
 
         for drop in raindrops.iter_mut() {
