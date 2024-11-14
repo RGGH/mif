@@ -1,8 +1,8 @@
 [![Rust](https://github.com/RGGH/mif/actions/workflows/rust.yml/badge.svg)](https://github.com/RGGH/mif/actions/workflows/rust.yml)
 
-# Adventures in frame buffers
+# Adventures in frame buffers - minifb
 
-## Features
+### Features
 - [x] image to bytes 
 - [x] collision detection
 - [ ] display score - Bitmap Font for Digits
