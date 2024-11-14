@@ -6,7 +6,7 @@
 - [x] image to bytes 
 - [x] collision detection
 - [x] frames update from image using slice unless game logic says otherwise
-- [ ] collision detection for each drop to hit cat
+- [x] collision detection for each drop to hit cat
 
   - Positive score: Original background.
   - Score 0 to -10: Mouse1 background.
