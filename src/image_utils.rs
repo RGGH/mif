@@ -44,3 +44,12 @@ pub fn draw_raindrop(buffer: &mut Vec<u32>, width: u32, height: u32, drop: &Rain
         }
     }
 }
+
+// Helper function to check collision between two rectangles
+pub fn is_collision(rect1: (u32, u32, u32, u32), rect2: (u32, u32, u32, u32)) -> bool {
+    let (x1, y1, w1, h1) = rect1;
+    let (x2, y2, w2, h2) = rect2;
+
+    x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
+}
+
