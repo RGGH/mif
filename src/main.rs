@@ -26,7 +26,9 @@ struct Raindrop {
 enum Background<'a> {
     Mono(&'a [u32]),    // Use slice instead of Vec for background data
     Original(&'a [u32]), // Use slice instead of Vec for background data
-    Custom(&'a [u32]),   // Use slice for custom background
+    Mouse1(&'a [u32]),   // Use slice for mouse1 background
+    Mouse2(&'a [u32]),   // Use slice for mouse2 background
+    
 }
 
 fn main() {
@@ -39,15 +41,30 @@ fn main() {
         image::load_from_memory(image_data).expect("Failed to load original image");
     let mono_background = convert_to_mono(image_data);
 
-    // Load custom background (e.g., when score reaches 15)
-    let custom_image_data = include_bytes!("../assets/background_mouse.png");
-    let custom_background = image::load_from_memory(custom_image_data).expect("Failed to load custom image");
+    // Load mouse1 background (e.g., when 1st drop lands on cat)
+    let mouse1_image_data = include_bytes!("../assets/background_mouse_1.png");
+    let mouse1_background = image::load_from_memory(mouse1_image_data).expect("Failed to load mouse1 image");
     
-    // Convert custom background to u32 pixel values
-    let custom_background = {
-        let (width, height) = custom_background.dimensions();
+    // Convert mouse1 background to u32 pixel values
+    let mouse1_background = {
+        let (width, height) = mouse1_background.dimensions();
         let mut buffer = vec![0; (width * height) as usize];
-        for (x, y, pixel) in custom_background.pixels() {
+        for (x, y, pixel) in mouse1_background.pixels() {
+            let Rgba([r, g, b, a]) = pixel;
+            buffer[(y * width + x) as usize] =
+                (a as u32) << 24 | (r as u32) << 16 | (g as u32) << 8 | b as u32;
+        }
+        buffer
+    };
+    // Load mouse2 background (e.g., when 2nd drop lands on cat)
+    let mouse2_image_data = include_bytes!("../assets/background_mouse_2.png");
+    let mouse2_background = image::load_from_memory(mouse2_image_data).expect("Failed to load mouse1 image");
+    
+    // Convert mouse2 background to u32 pixel values
+    let mouse2_background = {
+        let (width, height) = mouse2_background.dimensions();
+        let mut buffer = vec![0; (width * height) as usize];
+        for (x, y, pixel) in mouse2_background.pixels() {
             let Rgba([r, g, b, a]) = pixel;
             buffer[(y * width + x) as usize] =
                 (a as u32) << 24 | (r as u32) << 16 | (g as u32) << 8 | b as u32;
@@ -94,7 +111,8 @@ fn main() {
     // Store backgrounds in enum variants
     let mono_background_ref = Background::Mono(&mono_background);
     let original_background_ref = Background::Original(&color_background);
-    let custom_background_ref = Background::Custom(&custom_background);
+    let mouse1_background_ref = Background::Mouse1(&mouse1_background);
+    let mouse2_background_ref = Background::Mouse2(&mouse2_background);
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         // Directly use the background based on score, avoiding cloning
@@ -107,8 +125,16 @@ fn main() {
                 Background::Original(data) => data.to_vec(),
                 _ => vec![], // Default if something unexpected happens
             },
-            _ => match custom_background_ref {
-                Background::Custom(data) => data.to_vec(),
+            s if s >= 15 && s < 20 => match mouse1_background_ref {
+                Background::Mouse1(data) => data.to_vec(),
+                _ => vec![], // Default if something unexpected happens
+            },
+            s if s >= 20 && s < 250 => match mouse2_background_ref {
+                Background::Mouse2(data) => data.to_vec(),
+                _ => vec![], // Default if something unexpected happens
+            },
+            _ => match mouse1_background_ref {
+                Background::Mouse1(data) => data.to_vec(),
                 _ => vec![], // Default if something unexpected happens
             },
         };
