@@ -1,4 +1,4 @@
-[![Rust](https://github.com/RGGH/mif/actions/workflows/rust.yml/badge.svg)](https://github.com/RGGH/mif/actions/workflows/rust.yml)
+[![Rust](https://github.com/RGGH/mif/actions/workflows/rust.yml/badge.svg)](https://github.com/RGGH/mif/actions/workflows/rust.yml)[![Rust Cross Compile for Raspberry Pi 5 (ARM64)](https://github.com/RGGH/mif/actions/workflows/cross_comp_pi5.yaml/badge.svg)](https://github.com/RGGH/mif/actions/workflows/cross_comp_pi5.yaml)
 
 # Adventures in frame buffers - minifb
 
