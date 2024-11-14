@@ -1,0 +1,67 @@
+name: Rust Cross Compile for Ubuntu Linux
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write   # Ensure this allows pushing tags and commits
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        component: rustfmt
+
+    - name: Install cross
+      run: cargo install cross
+
+    - name: Build for Ubuntu Linux (x86_64)
+      run: cross build --target x86_64-unknown-linux-gnu --release
+
+    - name: Create a new tag
+      id: tag
+      run: |
+        TAG="Ubuntu"  # Set the tag to "Ubuntu" for consistency
+        git tag $TAG
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        git push origin $TAG
+        echo "TAG=$TAG" >> $GITHUB_ENV  # Set the tag as an environment variable for later use
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload artifact for Ubuntu Linux
+      uses: actions/upload-artifact@v3
+      with:
+        name: ubuntu-build
+        path: target/x86_64-unknown-linux-gnu/release/mif
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: target/x86_64-unknown-linux-gnu/release/mif
+        tag_name: ${{ env.TAG }}  # Pass the tag name from environment variable
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: target/x86_64-unknown-linux-gnu/release/mif
+        tag_name: ${{ env.TAG }}  # Ensure the tag is passed here too
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
