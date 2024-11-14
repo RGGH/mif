@@ -5,8 +5,10 @@ use rand::Rng;
 use std::time::Instant;
 
 use image_utils::{convert_to_mono, draw_raindrop, draw_square, is_collision};
+use sound_utils::play_embedded_sound;
 
 mod image_utils;
+mod sound_utils;
 
 const SQUARE_SIZE: u32 = 40;
 const SQUARE_SIZE_STEP: u32 = 5;
@@ -32,6 +34,7 @@ enum Background<'a> {
 }
 
 fn main() {
+    let _ = play_embedded_sound();
     let mut score = 0;
     let mut _current_background = Background::Mono(&[]); // Start with mono background
 
