@@ -34,13 +34,13 @@ fn main() {
     let mut _current_background = Background::Mono(&[]); // Start with mono background
 
     // Load both the mono and original backgrounds
-    let image_data = include_bytes!("background.png");
+    let image_data = include_bytes!("../assets/background.png");
     let original_background =
         image::load_from_memory(image_data).expect("Failed to load original image");
     let mono_background = convert_to_mono(image_data);
 
     // Load custom background (e.g., when score reaches 15)
-    let custom_image_data = include_bytes!("background_mouse.png");
+    let custom_image_data = include_bytes!("../assets/background_mouse.png");
     let custom_background = image::load_from_memory(custom_image_data).expect("Failed to load custom image");
     
     // Convert custom background to u32 pixel values
