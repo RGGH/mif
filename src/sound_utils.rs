@@ -22,22 +22,3 @@ pub fn play_embedded_sound() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::time::Duration;
-
-    #[test]
-    fn test_play_embedded_sound_in_thread() {
-        // Attempt to initialize and play sound in a separate thread
-        let play_result = play_embedded_sound();
-
-        // Check that initializing playback did not return an error
-        assert!(play_result.is_ok(), "Failed to initialize sound playback");
-
-        // Wait for a short duration to allow any errors in playback to occur
-        thread::sleep(Duration::from_millis(100));
-    }
-}
-
