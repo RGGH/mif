@@ -70,23 +70,20 @@ fn main() {
         .collect();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-    
-    if score >= WINNING_SCORE {
-    println!("You win! Final Score: {}", score);
+        if score >= WINNING_SCORE {
+            println!("You win! Final Score: {}", score);
 
-    let start_time = Instant::now();
-    let buffer = winner_background.clone(); // Clone once outside the loop
-    while start_time.elapsed().as_secs() < 10 {
-        // Display winner background
-        window
-            .update_with_buffer(&buffer, width as usize, height as usize)
-            .expect("Failed to update window buffer");
-    }
+            let start_time = Instant::now();
+            let buffer = winner_background.clone();
+            while start_time.elapsed().as_secs() < 4 {
+                // Display winner background
+                window
+                    .update_with_buffer(&buffer, width as usize, height as usize)
+                    .expect("Failed to update window buffer");
+            }
 
-    break; // Exit the game loop after 10 seconds
-}
-
-
+            break;
+        }
 
         let mut buffer = get_background_for_score(
             score.try_into().unwrap(),
@@ -118,7 +115,9 @@ fn main() {
         // Update raindrops
         for drop in raindrops.iter_mut() {
             if drop.start_time.elapsed().as_secs_f32() > 0.0 {
-                if drop.y < height - DROP_SIZE && drop.last_update.elapsed().as_secs_f32() > DROP_SPEED {
+                if drop.y < height - DROP_SIZE
+                    && drop.last_update.elapsed().as_secs_f32() > DROP_SPEED
+                {
                     drop.y += 1;
                     drop.last_update = Instant::now();
                 } else if drop.y >= height - DROP_SIZE {
