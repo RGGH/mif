@@ -4,14 +4,13 @@
 
 ### Features
 - [x] image to bytes 
-- [x] collision detection
 - [x] frames update from image using slice unless game logic says otherwise
-- [x] collision detection for each drop to hit cat
+- [x] collision detection for each drop to hit cat (negative) and cursor (positive)
 
   - Positive score: Original background.
   - Score 0 to -10: Mouse1 background.
   - Score -11 to -20: Mouse2 background.
   - Score below -20: Mono background.
 
+![image](https://github.com/user-attachments/assets/c27a47a8-7f4f-43b2-b6e5-c3b09db23fde)
 
-![image](https://github.com/user-attachments/assets/841e855f-37fc-4941-a779-e6fe92fbdd1c)
