@@ -1,4 +1,4 @@
-[![Rust](https://github.com/RGGH/mif/actions/workflows/rust.yml/badge.svg)](https://github.com/RGGH/mif/actions/workflows/rust.yml)
+[![Rust](https://github.com/RGGH/mif/actions/workflows/rust.yml/badge.svg)](https://github.com/RGGH/mif/actions/workflows/rust.yml)[![Rust Cross Compile for Raspberry Pi 5 (ARM64)](https://github.com/RGGH/mif/actions/workflows/cross_comp_pi5.yaml/badge.svg)](https://github.com/RGGH/mif/actions/workflows/cross_comp_pi5.yaml)
 
 # Adventures in frame buffers - minifb
 
@@ -6,7 +6,7 @@
 - [x] image to bytes 
 - [x] collision detection
 - [x] frames update from image using slice unless game logic says otherwise
-- [ ] collision detection for each drop to hit cat
+- [x] collision detection for each drop to hit cat
 
   - Positive score: Original background.
   - Score 0 to -10: Mouse1 background.
