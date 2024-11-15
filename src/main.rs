@@ -70,21 +70,23 @@ fn main() {
         .collect();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        if score >= WINNING_SCORE {
-            println!("You win! Final Score: {}", score);
+    
+    if score >= WINNING_SCORE {
+    println!("You win! Final Score: {}", score);
 
-            let start_time = Instant::now();
-            while start_time.elapsed().as_secs() < 10 {
-                let mut buffer = winner_background.clone();
+    let start_time = Instant::now();
+    let buffer = winner_background.clone(); // Clone once outside the loop
+    while start_time.elapsed().as_secs() < 10 {
+        // Display winner background
+        window
+            .update_with_buffer(&buffer, width as usize, height as usize)
+            .expect("Failed to update window buffer");
+    }
 
-                // Display winner background
-                window
-                    .update_with_buffer(&buffer, width as usize, height as usize)
-                    .expect("Failed to update window buffer");
-            }
+    break; // Exit the game loop after 10 seconds
+}
 
-            break; // Exit the game loop after 10 seconds
-        }
+
 
         let mut buffer = get_background_for_score(
             score.try_into().unwrap(),
@@ -158,4 +160,3 @@ fn main() {
         println!("Score: {}", score);
     }
 }
-
