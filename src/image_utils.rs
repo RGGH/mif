@@ -58,6 +58,36 @@ pub fn is_collision(rect1: (u32, u32, u32, u32), rect2: (u32, u32, u32, u32)) ->
     x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2
 }
 
+pub fn get_background_for_score<'a>(
+    score: i32,
+    mono_background: &'a [u32],
+    mouse1_background: &'a [u32],
+    mouse2_background: &'a [u32],
+    original_background: &'a [u32],
+    winner_background: &'a [u32],
+
+) -> Vec<u32> {
+    match score {
+        s if s > 29 => winner_background.to_vec(),
+        s if s < -30 => mono_background.to_vec(),
+        s if s <= -10 && s >= -20 => mouse1_background.to_vec(),
+        s if s <= -21 && s >= -30 => mouse2_background.to_vec(),
+        _ => original_background.to_vec(),
+    }
+}
+
+pub fn load_background_data(image_data: &[u8]) -> Vec<u32> {
+    let background = image::load_from_memory(image_data).expect("Failed to load image");
+    let (width, height) = background.dimensions();
+    let mut buffer = vec![0; (width * height) as usize];
+    for (x, y, pixel) in background.pixels() {
+        let Rgba([r, g, b, a]) = pixel;
+        buffer[(y * width + x) as usize] =
+            (a as u32) << 24 | (r as u32) << 16 | (g as u32) << 8 | b as u32;
+    }
+    buffer
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -68,7 +98,7 @@ mod tests {
         let width = 10;
         let height = 10;
         let mut buffer = vec![0xFFFFFFFF; (width * height) as usize];
-        
+
         // Initialize Raindrop with current Instant for `last_update` and `start_time`
         let raindrop = Raindrop {
             x: 3,
@@ -92,7 +122,7 @@ mod tests {
         let width = 10;
         let height = 10;
         let mut buffer = vec![0xFFFFFFFF; (width * height) as usize];
-        
+
         // Draw a 2x2 red square at (3, 3)
         draw_square(&mut buffer, width, height, 3, 3, 2);
 
@@ -117,5 +147,4 @@ mod tests {
         let rect3 = (5, 5, 2, 2);
         assert!(!is_collision(rect1, rect3));
     }
-
 }
