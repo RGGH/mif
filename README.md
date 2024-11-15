@@ -11,6 +11,7 @@
   - Score 0 to -10: Mouse1 background.
   - Score -11 to -20: Mouse2 background.
   - Score below -20: Mono background.
+  - Score 30 : winner background
 
 ![image](https://github.com/user-attachments/assets/c27a47a8-7f4f-43b2-b6e5-c3b09db23fde)
 
