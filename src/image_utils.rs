@@ -65,7 +65,6 @@ pub fn get_background_for_score<'a>(
     mouse2_background: &'a [u32],
     original_background: &'a [u32],
     winner_background: &'a [u32],
-
 ) -> Vec<u32> {
     match score {
         s if s > 29 => winner_background.to_vec(),

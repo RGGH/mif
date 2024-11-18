@@ -7,6 +7,7 @@ edition = "2021"
 image = "0.25.5"
 minifb = "0.27.0"
 rand = "0.8.5"
+rusttype = "0.9.3"
 
 [dev-dependencies]
 cross = "0.2"

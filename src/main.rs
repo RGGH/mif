@@ -1,7 +1,7 @@
 use image::GenericImageView;
 use minifb::{Key, Window, WindowOptions};
 use rand::Rng;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use image_utils::{convert_to_mono, draw_raindrop, draw_square, is_collision};
 use image_utils::{get_background_for_score, load_background_data};
@@ -11,8 +11,9 @@ mod image_utils;
 const DROP_SIZE: u32 = 6;
 const NUM_DROPS: usize = 8;
 const DROP_DELAY: f32 = 0.5; // Delay in seconds for staggered start of each drop
-const DROP_SPEED: f32 = 0.0001; // Time-based speed (larger values make drops fall slower)
+const DROP_SPEED: f32 = 200.0; // Speed in pixels per second
 const WINNING_SCORE: i32 = 30; // Score required to win
+const TARGET_FPS: f32 = 60.0;
 
 struct Raindrop {
     x: u32,
@@ -64,12 +65,16 @@ fn main() {
         .map(|i| Raindrop {
             x: rand::thread_rng().gen_range(0..width - DROP_SIZE),
             y: 0,
-            start_time: Instant::now() + std::time::Duration::from_secs_f32(i as f32 * DROP_DELAY),
+            start_time: Instant::now() + Duration::from_secs_f32(i as f32 * DROP_DELAY),
             last_update: Instant::now(),
         })
         .collect();
 
+    let frame_duration = Duration::from_secs_f32(1.0 / TARGET_FPS);
+
     while window.is_open() && !window.is_key_down(Key::Escape) {
+        let frame_start = Instant::now();
+
         if score >= WINNING_SCORE {
             println!("You win! Final Score: {}", score);
 
@@ -96,16 +101,16 @@ fn main() {
 
         // Cursor movement
         if window.is_key_down(Key::Up) && cursor_y > 0 {
-            cursor_y -= 1;
+            cursor_y = cursor_y.saturating_sub(5);
         }
         if window.is_key_down(Key::Down) && cursor_y + square_size < height {
-            cursor_y += 1;
+            cursor_y = cursor_y.saturating_add(5);
         }
         if window.is_key_down(Key::Left) && cursor_x > 0 {
-            cursor_x -= 1;
+            cursor_x = cursor_x.saturating_sub(5);
         }
         if window.is_key_down(Key::Right) && cursor_x + square_size < width {
-            cursor_x += 1;
+            cursor_x = cursor_x.saturating_add(5);
         }
 
         let cat_rect = (cat_x, cat_y, cat_width, square_size);
@@ -115,12 +120,13 @@ fn main() {
         // Update raindrops
         for drop in raindrops.iter_mut() {
             if drop.start_time.elapsed().as_secs_f32() > 0.0 {
-                if drop.y < height - DROP_SIZE
-                    && drop.last_update.elapsed().as_secs_f32() > DROP_SPEED
-                {
-                    drop.y += 1;
+                let elapsed = drop.last_update.elapsed().as_secs_f32();
+                let pixels_to_move = (elapsed * DROP_SPEED).round() as u32;
+
+                if drop.y < height - DROP_SIZE {
+                    drop.y += pixels_to_move;
                     drop.last_update = Instant::now();
-                } else if drop.y >= height - DROP_SIZE {
+                } else {
                     drop.y = 0;
                     drop.x = rand::thread_rng().gen_range(0..width - DROP_SIZE);
                 }
@@ -155,7 +161,10 @@ fn main() {
             .update_with_buffer(&buffer, width as usize, height as usize)
             .expect("Failed to update window buffer");
 
-        print!("\x1B[2J\x1B[1;1H");
-        println!("Score: {}", score);
+        // Cap FPS
+        let elapsed = frame_start.elapsed();
+        if elapsed < frame_duration {
+            std::thread::sleep(frame_duration - elapsed);
+        }
     }
 }
