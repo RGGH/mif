@@ -1,7 +1,34 @@
 use crate::Raindrop;
+use crate::Scale;
+use crate::Font;
 use crate::DROP_SIZE;
 
 use image::{GenericImageView, Rgba};
+// Render text using rusttype
+pub fn draw_text(buffer: &mut Vec<u32>, width: u32, height: u32, text: &str, x: u32, y: u32) {
+    let font_data = include_bytes!("../assets/FiraSans-SemiBold.otf");
+    let font = Font::try_from_bytes(font_data as &[u8]).expect("Failed to load font");
+
+    let scale = Scale::uniform(31.0); // Font size
+    let start = rusttype::point(x as f32, y as f32);
+    let layout = font.layout(text, scale, start);
+
+    for glyph in layout {
+        if let Some(bounding_box) = glyph.pixel_bounding_box() {
+            glyph.draw(|gx, gy, v| {
+                let px = bounding_box.min.x + gx as i32;
+                let py = bounding_box.min.y + gy as i32;
+
+                if px >= 0 && py >= 0 && px < width as i32 && py < height as i32 {
+                    let idx = (py as u32 * width + px as u32) as usize;
+                    let alpha = (v * 255.0) as u32;
+                    buffer[idx] = (255 << 24) | (alpha << 16) | (alpha << 8) | alpha; // White text
+                }
+            });
+        }
+    }
+}
+
 
 pub fn convert_to_mono(image_data: &[u8]) -> Vec<u32> {
     let img = image::load_from_memory(image_data).expect("Failed to load image");

@@ -1,10 +1,12 @@
 use image::GenericImageView;
 use minifb::{Key, Window, WindowOptions};
 use rand::Rng;
+use rusttype::{Font, Scale};
 use std::time::{Duration, Instant};
 
 use image_utils::{convert_to_mono, draw_raindrop, draw_square, is_collision};
 use image_utils::{get_background_for_score, load_background_data};
+use crate::image_utils::draw_text;
 
 mod image_utils;
 
@@ -21,6 +23,8 @@ struct Raindrop {
     start_time: Instant,  // Time when the drop starts falling
     last_update: Instant, // Last time the drop's position was updated
 }
+
+
 
 fn main() {
     let mut score: i32 = 0;
@@ -151,6 +155,9 @@ fn main() {
             draw_raindrop(&mut buffer, width, height, drop);
         }
 
+        // Render the score on the screen
+        draw_text(&mut buffer, width, height, &format!("Score: {}", score), 10, 30);
+
         if score > 10 {
             square_size = 50;
         } else {
@@ -168,3 +175,4 @@ fn main() {
         }
     }
 }
+
