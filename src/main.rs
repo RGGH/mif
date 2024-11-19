@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 
 use image_utils::{convert_to_mono, draw_raindrop, draw_square, is_collision};
 use image_utils::{get_background_for_score, load_background_data};
-use crate::image_utils::draw_text;
+use image_utils::draw_text;
 
 mod image_utils;
 
